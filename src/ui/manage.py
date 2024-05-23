@@ -3,17 +3,19 @@ from DeleteTask import deleteTask
 from CreateTask import createTask
 from SearchTask import searchTask
 
-st.title("Task Manager")
+
 
 def landingPage():
     st.set_page_config(page_title="Task Management Dashboard", layout="wide", )
-    taskActivities : {
+    st.title("Task Manager")
+    taskActivities = {
         "Task Manager" : showPage,
         "Create Task" : createTask,
         "Search Task" : searchTask,
         "Delete Task" : deleteTask
     }
     selected_activity = st.sidebar.radio("Task Facets", list(taskActivities.keys()))
+    taskActivities[selected_activity]()
 
 
 def showPage():
