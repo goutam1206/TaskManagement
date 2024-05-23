@@ -9,8 +9,21 @@ def createTask():
     task_description = st.text_area("Task Description","", height = 200, key="desc")
     due_date = st.date_input("Task completion Date", date.today())
     if st.button('Submit Task'):
+        # Check if the input is empty
+        if not task_name:
+            st.error("Task Name is required. Please enter a value.")
+            st.stop()
+        # Check if the input is empty
+        if not task_description:
+            st.error("Task Description is required. Please enter a value.")
+            st.stop()
+        # Check if the input is empty
+        if not due_date:
+            st.error("Task completion date is required. Please enter a value.")
+            st.stop()
         if due_date < date.today():
-            st.markdown('<p class="error-message">Error: The due date cannot be in the past.</p>', unsafe_allow_html=True)
+            st.error("The due date cannot be in the past.")
+            st.stop()
         else:
             st.write("Task Details Submitted:")
             st.write(f"Task Name: {task_name}")
@@ -19,7 +32,8 @@ def createTask():
             data = {
                 "task_name"     : task_name,
                 "task_details"  : task_description,
-                "due_date"      : str(due_date)
+                "due_date"      : str(due_date),
+                "status"        : "TO_DO"
             }
 
             # Send data to the Flask server
