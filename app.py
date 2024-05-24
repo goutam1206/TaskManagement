@@ -3,6 +3,7 @@ import threading
 import subprocess
 import pymongo
 import json
+from bson import ObjectId
 import os
 
 app = Flask(__name__)
@@ -62,28 +63,70 @@ def addATask():
 def getATask():
     try:
         if request.method == 'GET':
-        
+            # Connect to MongoDB
             client = pymongo.MongoClient("mongodb+srv://taskmanager:QZdYRbZwA45j7bUv@cluster0.uuvuidq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
             # Select database
             db = client["task_manager"]
 
             # Select collection
             collection = db["task_list"]
-            # Fetch all documents from collection
-            all_documents = list(collection.find())  # Convert cursor to list
-            
-            # Convert documents to JSON format
-            json_docs = []
+            # Fetch all documents from collectionclear
+            all_documents = list(collection.find())
+            # Convert ObjectId to string in each document
             for doc in all_documents:
-                # Convert ObjectId to string
                 doc['_id'] = str(doc['_id'])
-                json_docs.append(doc)
+
+            # Convert documents to JSON format
+            json_docs = all_documents  # bson.json_util.dumps handles ObjectId serialization
             
-            return jsonify(json_docs)  # Return JSON response
+            return json_docs, 200  # Return as JSON response with HTTP status code 200
         else:
             return jsonify({"error": "Method not allowed"}), 405
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# Update operation
+@app.route('/update_task', methods=['POST'])
+def update_task():
+    task_id = request.json.get('task_id')
+    updated_task_details = request.json.get('updated_task_details')
+    client = pymongo.MongoClient("mongodb+srv://taskmanager:QZdYRbZwA45j7bUv@cluster0.uuvuidq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+    # Select database
+    db = client["task_manager"]
+
+    # Select collection
+    collection = db["task_list"]
+
+    if task_id and updated_task_details:
+        # Update the task in the database
+        result = collection.update_one({'_id': ObjectId(task_id)}, {'$set': updated_task_details})
+        if result.modified_count == 1:
+            return jsonify({'message': 'Task updated successfully'})
+        else:
+            return jsonify({'error': 'Failed to update task'}), 500
+    else:
+        return jsonify({'error': 'Missing task ID or updated task details'}), 400
+
+# Delete operation
+@app.route('/delete_task', methods=['POST'])
+def delete_task():
+    task_id = request.json.get('task_id')
+    client = pymongo.MongoClient("mongodb+srv://taskmanager:QZdYRbZwA45j7bUv@cluster0.uuvuidq.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
+    # Select database
+    db = client["task_manager"]
+
+    # Select collection
+    collection = db["task_list"]
+    if task_id:
+        # Delete the task from the database
+        result = collection.delete_one({'_id': ObjectId(task_id)})
+        if result.deleted_count == 1:
+            return jsonify({'message': 'Task deleted successfully'})
+        else:
+            return jsonify({'error': 'Failed to delete task'}), 500
+    else:
+        return jsonify({'error': 'Missing task ID'}), 400
 
 
 
